@@ -16,12 +16,10 @@ process.env.NOW_URL
 var Botkit = require('botkit');
 
 
-var Os = {
-  windows : "windows",
-  mac : "mac"
+var state = {
+  platform : "",
+  app : ""
 }
-
-
 
 var controller = Botkit.slackbot();
 var bot = controller.spawn({
@@ -34,33 +32,41 @@ bot.startRTM(function(error, whichBot, payload) {
 });
 
 
-controller.hears(['question me'],['direct_message','direct_mention','mention','ambient'],function(bot,message) {
+controller.hears(['primary function'], ['mention'], function(bot,message) {
 
   // start a conversation to handle this response.
   bot.startConversation(message,function(err,convo) {
 
-    convo.ask('Windows or mac?',function(response,convo) {
-  // say a different thing based on user response
-      if (response.text = Os.windows ) {
-        convo.say("okay, windows user eh?")
-      } else if (response.text = Os.mac ) {
-        convo.say("alright, we have a mac user")
-      } else {
-        convo.say("sorry" + response.text + "isn't known to me yet")
+    convo.ask('What platform are you using?',function(response,convo) {
+
+      if(response.text === "mac") {
+       convo.say('Ah, a mac user eh? Guess you don\'t like gaming much');
+       state.platform = "mac";
+       convo.next();
       }
+      else if (response.text === "windows") {
+        convo.say('Windows user huh?');
+        state.platform = "windows";
+        convo.next();
+      }
+      convo.next();
+
+      convo.ask("What program are you using?",function(response,convo) {
+
+        if (response.text !== "photoshop") {
+          convo.say('unfortunately, I can\'t help you, becuause nick has only programmed photoshop in at this stage.');state.app = "photoshop";
+          convo.next();
+        } else {
+          convo.say('Great, let\'s get started!');
+          state.app = "photoshop";
+          convo.next();
+        }
+        convo.say("Let me just confirm, you are a " + state.platform + " user and you are using " + state.app +  ". Is this correct?");
+
+      });
 
     });
 
   })
-
-});
-
-
-
-
-controller.hears(['hello'], ['mention'], function(whichBot, message) {
-  whichBot.reply(message, 'Hello, I am hotkey bot, I can tell you shortcuts for your programs \n'
-  + "Just tell me if you are using if you are using *OSX* or *WINDOWS* and we can get started" + Os.mac);
-
 
 });
