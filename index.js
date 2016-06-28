@@ -21,6 +21,25 @@ var state = {
   app : ""
 }
 
+var keys = {
+  photoshop : {
+      mac : {
+              "Draw Marquee from Center" :	"Option-Marquee",
+              "Add to a Selection" :	"Shift",
+              "Subtract from a Selection" :	"Option",
+              "Intersection with a Selection" :	"Shift-Option",
+              "Make Copy of Selection" :	"Option-Drag Selection",
+              "Move Selection" :	"Arrow Keys",
+              "Select all Opaque Pixels" : "Cmd-Click on Layer Thumbnail (in Layers panel)",
+              "Restore Last Selection" :	"Cmd-Shift-D",
+              "Feather Selection" :	"Shift-F6",
+              "Move Marquee while drawing" :	"Hold Space while drawing marquee"
+  },
+      windows : {}
+  }
+}
+
+
 var controller = Botkit.slackbot();
 var bot = controller.spawn({
   token: process.env.SLACKBOT_TOKEN
@@ -32,9 +51,36 @@ bot.startRTM(function(error, whichBot, payload) {
 });
 
 
-controller.hears(['primary function'], ['mention'], function(bot,message) {
+controller.hears(['help'], ['mention'], function(bot,message) {
 
   // start a conversation to handle this response.
+  bot.startConversation(message,function(err,convo) {
+
+    convo.say(
+`type this to do that
+Then also type this
+and this.
+but don't type this.`
+);
+    convo.say('Have a nice day!');
+
+  });
+});
+
+
+
+controller.hears(['go'], ['mention'],function(bot,message){
+  bot.startConversation(message,function(err,convo) {
+    convo.ask('what do you wanna do?',function(response,convo) {
+      convo.say(getQuery(response.text));
+      convo.next()
+    })
+  })
+});
+
+
+//functions
+var primaryFunction = (bot,message) => {
   bot.startConversation(message,function(err,convo) {
 
     convo.ask('What platform are you using?',function(response,convo) {
@@ -61,12 +107,45 @@ controller.hears(['primary function'], ['mention'], function(bot,message) {
           state.app = "photoshop";
           convo.next();
         }
-        convo.say("Let me just confirm, you are a " + state.platform + " user and you are using " + state.app +  ". Is this correct?");
-
+        convo.ask("Let me just confirm, you are a " + state.platform + " user and you are using " + state.app +  ". Is this correct?",function(response,convo) {
+          if (response.text === "yes" ) {
+            convo.say('type go @helperbot to start');
+            convo.next()
+          } else {
+            convo.say("oh, I must have made a mistake, or you did. It was probably you.");
+            convo.next();
+          }
+        });
       });
 
     });
 
   })
+}
 
+
+
+
+
+//Conversation starters
+controller.hears(['config'], ['mention'],primaryFunction);
+
+controller.hears(['go'], ['mention'],function(bot,message){
+  bot.startConversation(message,function(err,convo) {
+    convo.ask('What are you trying to do?',function(response,convo) {
+      convo.say(`The keyboard shortcut for ${response.text} is ${getQuery(response.text)}`);
+      convo.next()
+    })
+  })
 });
+
+//I want to !zoom in
+//key for !zoom in
+//function to get user request
+
+function getQuery(string){
+  var queryString = string.slice(string.indexOf("!")+1,string.length);
+  var program = state.app;
+  var os = state.platform;
+  return keys[program][os][queryString]
+}
