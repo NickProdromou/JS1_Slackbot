@@ -1,45 +1,7 @@
-/**
- * Your slackbot token is available as the global variable:
-
-process.env.SLACKBOT_TOKEN
-
- * When deployed to now.sh, the URL of your application is available as the
- * global variable:
-
-process.env.NOW_URL
-
- * The URL is useful for advanced use cases such as setting up an Outgoing
- * webhook:
- * https://github.com/howdyai/botkit/blob/master/readme-slack.md#outgoing-webhooks-and-slash-commands
- *
- */
+//require the botkit package
 var Botkit = require('botkit');
 
-
-var state = {
-  platform : "",
-  app : ""
-}
-
-var keys = {
-  photoshop : {
-      mac : {
-              "Draw Marquee from Center" :	"Option-Marquee",
-              "Add to a Selection" :	"Shift",
-              "Subtract from a Selection" :	"Option",
-              "Intersection with a Selection" :	"Shift-Option",
-              "Make Copy of Selection" :	"Option-Drag Selection",
-              "Move Selection" :	"Arrow Keys",
-              "Select all Opaque Pixels" : "Cmd-Click on Layer Thumbnail (in Layers panel)",
-              "Restore Last Selection" :	"Cmd-Shift-D",
-              "Feather Selection" :	"Shift-F6",
-              "Move Marquee while drawing" :	"Hold Space while drawing marquee"
-  },
-      windows : {}
-  }
-}
-
-
+//initiate the bot via the spawn method
 var controller = Botkit.slackbot();
 var bot = controller.spawn({
   token: process.env.SLACKBOT_TOKEN
@@ -50,6 +12,69 @@ bot.startRTM(function(error, whichBot, payload) {
   }
 });
 
+
+
+// object to set the state and determine the views
+var state = {
+  platform : "",
+  app : "",
+  users : []
+}
+// a second object to hold hotkeys / help information
+
+//to add: git, sketch, cli for mac, chrome etc etc.
+var keys = {
+  photoshop : {
+      mac : {
+              "draw marquee from center" :	"Option-Marquee",
+              "add to a selection" :	"Shift",
+              "subtract from a selection" :	"Option",
+              "intersection with a selection" :	"Shift-Option",
+              "make copy of selection" :	"Option-Drag Selection",
+              "move selection" :	"Arrow Keys",
+              "select all opaque pixels" : "Cmd-Click on Layer Thumbnail (in Layers panel)",
+              "restore last selection" :	"Cmd-Shift-D",
+              "feather selection" :	"Shift-F6",
+              "move marquee while drawing" :	"Hold Space while drawing marquee"
+  },
+      windows : {}
+  }
+}
+
+
+//fetching from the api
+
+bot.api.users.list({},function(err,response) {
+  console.log(response.members[0].name)
+  var members = response.members
+  var keysIn = Object.keys(response.members);
+  keysIn.forEach(function(key){
+    state.users.push(response.members[key].name);
+  })
+  console.log(getRandomUser(state.users))
+console.log(state.users)
+  if (err) {
+    console.log("api call failed")
+  }
+})
+
+//utility functions
+function getQuery(string){
+  var queryStringUp = string.slice(string.indexOf("!")+1,string.length);
+  var queryStringLow = queryStringUp.toLowerCase()
+  var program = state.app;
+  var os = state.platform;
+  if (keys[program][os][queryStringLow]){
+      return "when using " + state.app + " on " + state.platform + " the keyboard shortcut to " + queryStringUp +  " is " + "*"+keys[program][os][queryStringLow]+"*"
+  }
+    return "this command is unknown error"
+}
+
+
+
+
+
+//Listening functions
 
 controller.hears(['help'], ['mention'], function(bot,message) {
 
@@ -123,6 +148,10 @@ var primaryFunction = (bot,message) => {
   })
 }
 
+function getRandomUser(arr){
+ var randomNum = Math.round(Math.random() * arr.length);
+ return arr[randomNum];
+}
 
 
 
@@ -133,7 +162,7 @@ controller.hears(['config'], ['mention'],primaryFunction);
 controller.hears(['go'], ['mention'],function(bot,message){
   bot.startConversation(message,function(err,convo) {
     convo.ask('What are you trying to do?',function(response,convo) {
-      convo.say(`The keyboard shortcut for ${response.text} is ${getQuery(response.text)}`);
+      convo.say(getQuery(response.text));
       convo.next()
     })
   })
@@ -142,10 +171,3 @@ controller.hears(['go'], ['mention'],function(bot,message){
 //I want to !zoom in
 //key for !zoom in
 //function to get user request
-
-function getQuery(string){
-  var queryString = string.slice(string.indexOf("!")+1,string.length);
-  var program = state.app;
-  var os = state.platform;
-  return keys[program][os][queryString]
-}
