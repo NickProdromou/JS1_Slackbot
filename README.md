@@ -1,228 +1,44 @@
-# My First Slackbot
+hotkeybot
+========
 
-This project serves as a base to start creating a slackbot.
+***hotkeybot*** is a Slackbot that allows users to request keyboard shortcuts to programs, on different operating systems. At this stage, hotkeybot has one program built in; photoshop for mac and windows. It's more of a proof of concept at the moment.
 
-The tools used include:
+The idea is that, once I have the basic functionality down, hotkeybot can be extended by adding more programs, and eventually could be come a  useful library and tool for creative teams using slack. I plan to move beyond just design programs too.
 
-- node
-- npm
-- [botkit](https://github.com/howdyai/botkit)
-- [now.sh](https://now.sh)
-
-## Setup
-
-**Environment**
-
-For our Slackbot to talk to Slack, it needs a secret token. To ensure the secret
-token isn't accidentally shown to the world, we _environment variables_ that are
-_never_ commited to git or GitHub. These environment variables are stored in a
-file called `.env`.
-
-This project comes with sample environment variables in a file `.env.sample`. To
-get started, copy it to `.env`:
-
-```bash
-$ cp .env.sample .env
-```
-
-Edit the new `.env` file to add your slack token. For example, if your token was
-`abc123`, you'd edit the file to be:
-
-```
-SLACKBOT_TOKEN=abc123
-```
-
-_Remember: The `.env` file should never be added to git, otherwise you will be
-giving away your secret key!_
-
-**`now.sh`**
-
-We need to deploy our slackbot somewhere, and the easiest way is with the free
-service called [`now`](https://now.sh).
-
-Install `now` onto your machine:
-
-```bash
-$ npm install -g now
-```
-
+Why I built hotkeybot
 ---
+Coming from a design background, I know for a fact that knowing the keyboard shortcuts to common commands can speed up workflow phenomenally.
 
-## Making your slackbot
+hotkeybot comes with a large list of commands,and the bot will respond to you if you're doing something wrong. I have done a lot of error handling. and made sure that if something goes wrong the user knows exactly why they didn't get the expected output.
 
-### Getting Started
+***Currently, hotkeybot can respond to the following commands:***
 
-You'll first need to install the packages this project requires to run:
+* type **hello** Welcome the user, and explain what it's purpose is
+* Type **help** to show a comprehensive list of commands and how to use them.
+* Type **programs** to show a list of currently supported programs, which hotkeybot has keys for
+* Type **platforms** to show a list of currently supported operating systems (mac or windows)
+* Type **platform setup** here you can set the platform
+* Type **program setup** Here you can set the program to find keys for
+* Type **current commands** hotkeybot will show you what the current commands are for your platform/program combination
+* Type **key for ~<command to search for>** to search your current platform/program for the keyboard shortcut of that command. If your query is unsuccessful, hotkeybot will give an example of a correct command, selected randomly from your platform/program configuration. If platform and program aren't set, hotkeybot prompts you to set those before running this particular command.
+* type ****program ^platform !<command to search for>*** to do a quick search, this command also sets the program and platform in the process, and then searches that configuration. If there is an error, hotkeybot will advise what you got wrong. An example of how to use this shortcut is  ****photoshop ^mac !zoom in*** The order is important.
+* Type **random user** hotkeybot will return a random user from the current team, @mention them, print their real name and show their avatar.
 
-```bash
-$ npm install
-```
+Difficulties/Unresolved issues
+------
+The most difficult part was conditionally accessing the correct object per the users configuration. The quick search function relies on the command being typed last, If the user uses the quick search function and puts the command anywhere but the final position, hotkeybot will advise the user that the command was not found, and return an example of a command that does work.
 
-Next, you need to install and save the `botkit` package for this project:
+Another difficulty was dealing with the data, I had to source the hotkeys from online, place them into a spreadsheet program, and copy them into a separate js file to format them correctly.
 
-```bash
-$ npm install --save botkit
-```
-
-You will see `botkit` has been added to your `package.json` file for you:
-
-```json
-{
-  ...
-  "dependencies": {
-    "botkit": "^0.2.0",
-    ...
-  }
-  ...
-}
-```
-
-Now that you have `botkit` installed, we can access it in our JavaScript with
-the `require` function:
-
-```javascript
-var Botkit = require('botkit');
-```
-
-### Connecting to Slack
-
-Slack supports a number of different ways for your bot to connect. The most
-basic of which is [Real Time Messaging](http://api.slack.com/rtm) (aka, RTM).
-
-> The Real Time Messaging API is an API that allows you to receive
-> events from Slack in real time and send messages as a user. It is the basis for
-> all Slack clients. It's also commonly used with the bot user integration to
-> create helper bots for your team.
->
-> [Slack] will provide a stream of events, including both messages and updates to
-> the current state of the team.
->
-> Almost everything that happens in Slack will result in an event being sent [...]
-> The simplest event is a message sent from a user:
-
-Botkit comes with support for RTM ready to go. Here is an example modified
-slightly [from
-botkit's homepage](https://howdy.ai/botkit/#/get-your-bot-online):
-
-```javascript
-var Botkit = require('botkit');
-var controller = Botkit.slackbot();
-var bot = controller.spawn({
-  token: <your-token-here>
-})
-bot.startRTM(function(error, whichBot, payload) {
-  if (error) {
-    throw new Error('Could not connect to Slack');
-  }
-});
-```
-
-Once we've started the connection to the Real Time Messaging API, we can setup
-our bot to listen for keywords, commands, etc.
-
-### Listening
-
-Botkit provides a very useful function `.hears()` that allows our bot to
-optionally listen for different message types. 3 useful ones are:
-
-* `mention`: When someone uses your bot's name anywhere in their message
-  * > Jess: Hey everyone, check out @awesomebot my new bot!
-* `direct_mention`: When someone starts their message with your bot's name
-  * > Jess: @awesomebot how are you doing?
-* `direct_message`: When someone sends a private chat message to your bot
-
-You can read about more Slack event types [in the botkit
-documentation](https://github.com/howdyai/botkit/blob/master/readme-slack.md#slack-specific-events)
-
-Here is an example of listening for a `mention` message containing the word
-`'hello'`:
-
-```javascript
-controller.hears(['hello'], ['mention'], function(whichBot, message) {
-  whichBot.reply(message, 'Did you say my name?');
-});
-```
-
-To trigger that response, you could post a message such as:
-
-> Jess: Everyone say hello to @awesomebot!
-
-**`.hears()`**
-
-`.hears()` has 3 parameters;
-
-1. An array of phrases to listen for. These phrases can also be [regular
-   expression strings](https://mdn.io/regex)
-2. An array of events to listen to. [See the
-   docs](https://github.com/howdyai/botkit/blob/master/readme-slack.md#slack-specific-events)
-3. A function to execute after a matching event + phrase is received.
-
-### Testing locally
-
-We can test our slackbot locally to make sure it's working. To do so, we use
-`npm` to start up our program:
-
-```bash
-$ npm start
-```
-
-_Note: This runs the command listed in the `package.json` file under
-`scripts.start`, which is itself starting up `node` with a couple of extra
-options_
-
-Go check out Slack; your bot should now be listening.
-
-To stop it running, type `<Ctrl-C>` on the command line.
-
-### Adcanced Usage
-
-Botkit provides lots of great ways to interact with Slack and its users. [Read
-the
-documentation](https://github.com/howdyai/botkit/blob/master/readme-slack.md#outgoing-webhooks-and-slash-commands)
-to find out more.
-
-If you would like to setup an Outgoing web hook, or a slash command, let your
-instructor know the URL (see _Deploying_ below) and the parameters you'd like to
-setup.
-
+The process
 ---
+The first step was to model the data, I wrote pages of how I would structure the project before I wrote a line of code, once I knew how the program should work, I started playing with the functionality of botkit. Once I had the data, I decided how I wanted to use the search function, I didn't initially plan on having something as complex as I did.
 
-## Deploying
+Once I started writing the program, I did a lot of testing inside slack, working with responses sent from the bot. This lead me to type the same string over and over ****photoshop ^mac !zoom tool*** which was very tedious. I worked out that since I was working with simple strings, I could automate my testing by using console.log statement... This lead me to A LOT of console.log statements with strings like ("line 54, the variable query contains" + query) just to keep track of where I was. Line by line, I followed the code in my sorting and querying algorithms for 2 days just to work out that what was being returned from interaction with the bot was very different to what I was testing in my console.log statements. So I combined the strategies, taking the strings given to the bot and line-by-line working out what was happening to my data.
 
-When you're done testing locally and are ready to deploy your application, make
-sure you're in this project's directory then execute:
+Once I worked out the querying functions, and the object iteration, I started writing the helper functions (set the platform, list the available platforms, help dialogue etc etc etc)... which were a cakewalk compared to the querying.
 
-```bash
-$ now
-```
 
-_Note: The first time you do this, it will ask for a valid email address. Enter one,
-then go click the link in the email you receive._
-
-`now` will automatically upload and deploy your project for you to the web.
-
-Every time you deploy, `now` will give you a new, unique URL for your project.
-This means **you should delete any previous deployments to avoid having multiple
-copies running at the same time**:
-
-To delete a deployment, first list out the current IDs:
-
-```bash
-$ now list
-
-my-first-slackbot
-
-  VGCt1QVxGMj5i84kfbprKlzH      https://myfirstslackbot-ddwbrdgjjm.now.sh      1h ago
-```
-
-Then, to remove the deploy with id `VGCt1QVxGMj5i84kfbprKlzH`, run:
-
-```bash
-$ now remove VGCt1QVxGMj5i84kfbprKlzH
-```
-
-## All done?
-
-Got a Slackbot up and running, responding to commands? Excellent! Ask your
-instructor for more info on the Slackbot assignment which you are now prepared
-to get started with.
+Installation instructions
+---
+Coming soon.
