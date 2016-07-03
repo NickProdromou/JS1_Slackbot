@@ -129,7 +129,7 @@ function getState(string) {
   if (setState(arr,"^","platform") && setState(arr,"*","app") ) {
     return getQuery(string);
   } else {
-    return "There was an error in the operation\nPlease check you have defined a value for ^platform and *application\n type: ```?help``` to see a list of commands " ;
+    return "There was an error in the operation\n Please check you have defined a value for ^platform and *application\n type: `@hotkeybot help` to see a list of commands " ;
   }
 }
 
