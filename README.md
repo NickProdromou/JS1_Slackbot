@@ -1,7 +1,7 @@
 hotkeybot
 ========
 
-***hotkeybot*** is a Slackbot that allows users to request keyboard shortcuts to programs, on different operating systems. At this stage, hotkeybot has one program built in; photoshop for mac and windows. It's more of a proof of concept at the moment.
+***hotkeybot*** is a Slackbot that allows users to request keyboard shortcuts to programs on different operating systems. At this stage, hotkeybot has one program built in; photoshop for mac and windows. It's more of a proof of concept at the moment.
 
 The idea is that, once I have the basic functionality down, hotkeybot can be extended by adding more programs, and eventually could be come a  useful library and tool for creative teams using slack. I plan to move beyond just design programs too.
 
@@ -9,12 +9,12 @@ Why I built hotkeybot
 ---
 Coming from a design background, I know for a fact that knowing the keyboard shortcuts to common commands can speed up workflow phenomenally.
 
-hotkeybot comes with a large list of commands,and the bot will respond to you if you're doing something wrong. I have done a lot of error handling. and made sure that if something goes wrong the user knows exactly why they didn't get the expected output.
+hotkeybot comes with a large list of commands,and the bot will respond to you if you're doing something wrong. I have done a lot of error handling and made sure that if something goes wrong the user knows exactly why they didn't get the expected output.
 
 ***Currently, hotkeybot can respond to the following commands:***
 
-* type **hello** Welcome the user, and explain what it's purpose is
-* Type **help** to show a comprehensive list of commands and how to use them.
+* Type **hello** Welcome the user, and explain what it's purpose is
+* Type **help** to show a comprehensive list of commands and how to use them
 * Type **programs** to show a list of currently supported programs, which hotkeybot has keys for
 * Type **platforms** to show a list of currently supported operating systems (mac or windows)
 * Type **platform setup** here you can set the platform
@@ -36,7 +36,7 @@ The first step was to model the data, I wrote pages of how I would structure the
 
 Once I started writing the program, I did a lot of testing inside slack, working with responses sent from the bot. This lead me to type the same string over and over ****photoshop ^mac !zoom tool*** which was very tedious. I worked out that since I was working with simple strings, I could automate my testing by using console.log statement... This lead me to A LOT of console.log statements with strings like ("line 54, the variable query contains" + query) just to keep track of where I was. Line by line, I followed the code in my sorting and querying algorithms for 2 days just to work out that what was being returned from interaction with the bot was very different to what I was testing in my console.log statements. So I combined the strategies, taking the strings given to the bot and line-by-line working out what was happening to my data.
 
-Once I worked out the querying functions, and the object iteration, I started writing the helper functions (set the platform, list the available platforms, help dialogue etc etc etc)... which were a cakewalk compared to the querying.
+Once I worked out the querying functions, and the object iteration, I started writing the helper functions (set the platform, list the available platforms, help dialogue etc)... which were a cakewalk compared to the querying.
 
 
 Installation instructions
