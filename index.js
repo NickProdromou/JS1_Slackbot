@@ -43,26 +43,26 @@ var keys = {
       "dodge tool" :	"O",
       "pen tool" : "P",
       "type tool" :	"T",
-      "direct Selection tool" :	"A",
+      "direct selection tool" :	"A",
       "shape tool" :	"U",
       "hand tool" :	"H",
       "rotate View tool" :	"R",
       "zoom tool" :	"Z"
           },
     windows : {
-      "start help"	:	"F1",
-      "undo"	:	"Ctrl + Z",
-      "redo"	:	"Ctrl + Y",
-      "cut"	:	"Ctrl + X",
-      "copy"	: "Ctrl + C",
-      "paste"	:	"Ctrl + V",
-      "show/hide brush panel"	:	"F5",
-      "color panel"	:	"F6",
-      "layers panel"	:	"F7",
-      "info panel"	:	"F8",
-      "actions panel"	:	"F9",
-      "revert"	:	"F12",
-      "fill"	:	"Shift + F5",
+      "start help" : "F1",
+      "undo" : "Ctrl + Z",
+      "redo" : "Ctrl + Y",
+      "cut" : "Ctrl + X",
+      "copy" : "Ctrl + C",
+      "paste" : "Ctrl + V",
+      "show/hide brush panel" : "F5",
+      "color panel" : "F6",
+      "layers panel" : "F7",
+      "info panel" : "F8",
+      "actions panel" : "F9",
+      "revert" : "F12",
+      "fill" : "Shift + F5",
       "feather selection"	:	"Shift + F6",
       "inverse selection"	:	"Ctrl + Shift + I",
       "move tool"	:	"V",
@@ -126,14 +126,14 @@ bot.startRTM(function(error, whichBot, payload) {
 
 
 //utility functions
-
+getState("*photoshop ^mac !magic wand");
 
 function getState(string) {
   var arr = string.split(" ");
   if (setState(arr,"^","platform") && setState(arr,"*","app") ) {
     return getQuery(string);
   } else {
-    return console.log("there was an error in the operation")
+    return "There was an error in the operation\nPlease check you have defined a value for ^platform and *application\n type: ```?help``` to see a list of commands " ;
   }
 }
 
@@ -151,29 +151,21 @@ function setState(arr,selector,key){
         state[key] = queryString;
         return true;
     } else {
-      console.log("the value is incorrect");
       return false;
     }
 }
 
 function getQuery(string){
-  console.log(string)
   var queryStringUp = string.slice(string.indexOf("!")+1,string.length);
   var queryStringLow = queryStringUp.toLowerCase()
-  console.log(queryStringLow)
   var program = state.app.toString();
-  console.log("line 169 " + program)
   var os = state.platform.toString();
-  console.log("line 171 " + os)
   var location = keys[program][os];
-  console.log(location)
-  console.log(location[queryStringLow])
-
-  if (location[queryStringLow.toString()] !== undefined){
-      console.log("when using " + state.app + " on " + state.platform + " the keyboard shortcut to " + queryStringUp +  " is " + "*"+location[queryStringLow]+"*")
+  var keysInLocation = Object.keys(location);
+  if (location[queryStringLow] !== undefined){
       return "when using " + state.app + " on " + state.platform + " the keyboard shortcut to " + queryStringUp +  " is " + "*"+location[queryStringLow]+"*";
   }
-    return "this command is undefined";
+    return "the command _" + queryStringLow + "_ is undefined \n an example of a valid command in *" + state.app + "* on *" + state.platform + "* is *"+ getRandomUser(keysInLocation) + "*" ;
 }
 
 function getRandomUser(arr){
@@ -182,12 +174,28 @@ function getRandomUser(arr){
  return arr[randomNum];
 }
 
-//response functions
-var primaryFunction = (bot,message) => {
+
+
+
+
+//Listening functions
+
+var helpDialogue = (bot,message) => {
   bot.startConversation(message,function(err,convo) {
+    convo.say(
+`type this to do that
+Then also type this
+and this.
+but don't type this.`
+);
+    convo.say('To see this list again, just type "help" and mention me!');
+  });
+}
 
+//response functions
+var runSetup = (bot,message) => {
+  bot.startConversation(message,function(err,convo) {
     convo.ask('What platform are you using?',function(response,convo) {
-
       if(response.text === "mac") {
        state.platform = "mac";
        convo.next();
@@ -197,9 +205,7 @@ var primaryFunction = (bot,message) => {
         convo.next();
       }
       convo.next();
-
       convo.ask("What program are you using?",function(response,convo) {
-
         if (response.text !== "photoshop") {
           convo.say('unfortunately, I can\'t help you, becuause nick has only programmed photoshop in at this stage.');
           convo.next();
@@ -218,46 +224,25 @@ var primaryFunction = (bot,message) => {
           }
         });
       });
-
     });
-
   })
 }
 
+var shortCut = (whichBot, message) => {
+  whichBot.reply(message,getState(message.text));
+}
 
+var welcomeUser = (whichBot, message) => {
+  whichBot.reply(message,"Hello, I am a bot");
+}
+
+var tryAgain = (whichBot,message) => {
+  whichBot.reply(message,"Did you mention me? I don't recognize that command. \n try typing @helperbot help to see what I can do!")
+}
 
 //Conversation starters
-controller.hears(['config'], ['mention'],primaryFunction);
-
-controller.hears(['test',"!","^","*"], ['mention'], function(whichBot, message) {
-  var responseText = message.text
-  var removeMention = responseText.slice(responseText[0],responseText.indexOf("<"))
-  whichBot.reply(message,getState(removeMention));
-});
-
-controller.hears(['go'], ['mention'],function(bot,message){
-  bot.startConversation(message,function(err,convo) {
-    convo.ask('What are you trying to do?',function(response,convo) {
-      convo.say(getQuery(response.text));
-      convo.next()
-    })
-  })
-});
-
-//Listening functions
-
-controller.hears(['help'], ['mention'], function(bot,message) {
-
-  // start a conversation to handle this response.
-  bot.startConversation(message,function(err,convo) {
-
-    convo.say(
-`type this to do that
-Then also type this
-and this.
-but don't type this.`
-);
-    convo.say('Have a nice day!');
-
-  });
-});
+controller.hears(['hello','hey','hi','ahoy hoy','papahotkeys'],['mention','direct_mention'],welcomeUser)
+controller.hears(['help'], ['mention','direct_mention'],helpDialogue)
+controller.hears(['config'], ['mention'],runSetup);
+controller.hears( ["^"] && ["*"] && ['!'] , ['ambient','direct_mention'], shortCut);
+controller.hears([""],['mention','direct_mention'],tryAgain)
