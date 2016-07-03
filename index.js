@@ -6,8 +6,6 @@ var state = {
   users : []
 }
 
-// state.app = "photoshop";
-// state.platform = "mac";
 
 // a second object to hold hotkeys / help information
 var keys = {
@@ -106,27 +104,27 @@ bot.startRTM(function(error, whichBot, payload) {
 
 
 
-//
-// //fetching from the api
-//
-// bot.api.users.list({},function(err,response) {
-//   console.log(response.members[0].name)
-//   var members = response.members
-//   var keysIn = Object.keys(response.members);
-//   keysIn.forEach(function(key){
-//     state.users.push(response.members[key].name);
-//   })
-// console.log(getRandomUser(state.users))
-// console.log(state.users)
-//   if (err) {
-//     console.log("api call failed")
-//   }
-// })
-//
+
+//fetching from the api
+
+bot.api.users.list({},function(err,response) {
+  console.log(response.members[0].name)
+  var members = response.members
+  var keysIn = Object.keys(response.members);
+  keysIn.forEach(function(key){
+    state.users.push(response.members[key].name);
+  })
+console.log(getRandomUser(state.users))
+console.log(state.users)
+  if (err) {
+    console.log("api call failed")
+  }
+})
+
 
 
 //utility functions
-getState("*photoshop ^mac !magic wand");
+
 
 function getState(string) {
   var arr = string.split(" ");
@@ -163,7 +161,20 @@ function getQuery(string){
   var location = keys[program][os];
   var keysInLocation = Object.keys(location);
   if (location[queryStringLow] !== undefined){
-      return "when using " + state.app + " on " + state.platform + " the keyboard shortcut to " + queryStringUp +  " is " + "*"+location[queryStringLow]+"*";
+      return "when using " + state.app + " on " + state.platform + " the keyboard shortcut to " + queryStringUp +  " is " + "`"+location[queryStringLow]+"`";
+  }
+    return "the command _" + queryStringLow + "_ is undefined \n an example of a valid command in *" + state.app + "* on *" + state.platform + "* is *"+ getRandomUser(keysInLocation) + "*" ;
+}
+
+function getQueryTwo(string){
+  var queryStringUp = string.slice(string.indexOf("~")+1,string.length);
+  var queryStringLow = queryStringUp.toLowerCase()
+  var program = state.app.toString();
+  var os = state.platform.toString();
+  var location = keys[program][os];
+  var keysInLocation = Object.keys(location);
+  if (location[queryStringLow] !== undefined){
+      return "when using " + state.app + " on " + state.platform + " the keyboard shortcut to " + queryStringUp +  " is " + "`"+location[queryStringLow]+"`";
   }
     return "the command _" + queryStringLow + "_ is undefined \n an example of a valid command in *" + state.app + "* on *" + state.platform + "* is *"+ getRandomUser(keysInLocation) + "*" ;
 }
@@ -178,54 +189,66 @@ function getRandomUser(arr){
 
 
 
-//Listening functions
+//Callbacks
 
 var helpDialogue = (bot,message) => {
   bot.startConversation(message,function(err,convo) {
-    convo.say(
-`type this to do that
-Then also type this
-and this.
-but don't type this.`
-);
+    var buildHelpString = "*Here are list of my commands* ```just type @hotkeybot and your command to use them when you want me!``` "
+    buildHelpString += "type `hello` to see my welcome message \n"
+    buildHelpString += "type `help` to see this message again \n"
+    buildHelpString += "type `platforms` to see a list of currently supported operating systems \n"
+    buildHelpString += "type `platform setup` to set the platform \n"
+    buildHelpString += "type `program setup` to set the current program to search keys for \n"
+    buildHelpString += "type `programs` to see a list of currently supported programs\n"
+    buildHelpString += "*how to find keys* \n"
+    buildHelpString += "```once you've set default platform and program, type key for ~command to search for a command, ie: key for ~zoom tool```"
+    buildHelpString += "*advanced use* \n"
+    buildHelpString += "to set the platform and program, and search for keys in one command type `*program ^platform !command query`\n"
+    buildHelpString += "Example: `*photoshop ^mac !shape tool`"
+    convo.say(buildHelpString);
     convo.say('To see this list again, just type "help" and mention me!');
   });
 }
 
-//response functions
-var runSetup = (bot,message) => {
+var setPlatform = (bot,message) => {
   bot.startConversation(message,function(err,convo) {
-    convo.ask('What platform are you using?',function(response,convo) {
-      if(response.text === "mac") {
-       state.platform = "mac";
-       convo.next();
-      }
-      else if (response.text === "windows") {
-        state.platform = "windows";
+
+    convo.ask('What platform are you currently using',function(response,convo) {
+      if (state.acceptedStates.platform.indexOf(response.text) !== -1) {
+          state.platform = response.text;
+          convo.say("okay, your platform has been set to " + state["platform"]);
+          convo.next();
+      } else {
+        convo.say("Sorry, " + response.text + "is not in my supported platforms, try one of these instead *" + state.acceptedStates.platform + "*")
         convo.next();
-      }
-      convo.next();
-      convo.ask("What program are you using?",function(response,convo) {
-        if (response.text !== "photoshop") {
-          convo.say('unfortunately, I can\'t help you, becuause nick has only programmed photoshop in at this stage.');
-          convo.next();
-        } else {
-          convo.say('Great, let\'s get started!');
-          state.app = "photoshop";
-          convo.next();
-        }
-        convo.ask("Let me just confirm, you are a " + state.platform + " user and you are using " + state.app +  ". Is this correct?",function(response,convo) {
-          if (response.text === "yes" ) {
-            convo.say('type go @helperbot to start');
-            convo.next()
-          } else {
-            convo.say("oh, I must have made a mistake, or you did. It was probably you.");
-            convo.next();
-          }
-        });
-      });
-    });
+        convo.repeat();
+    };
   })
+})
+}
+
+var setProgram = (bot,message) => {
+  bot.startConversation(message,function(err,convo) {
+    convo.ask('What program do you want to set as default?',function(response,convo) {
+      if (state.acceptedStates.app.indexOf(response.text) !== -1) {
+          state.app = response.text;
+          convo.say("okay, your platform has been set to " + state["app"]);
+          convo.next();
+      } else {
+        convo.say("Sorry, " + response.text + " is not in my programs, try one of these instead *" + state.acceptedStates.app + "*")
+        convo.next();
+        convo.repeat();
+    };
+  })
+})
+}
+
+var currentApp = (whichBot,message) => {
+  whichBot.reply(message,"Platform is set to *" + state.app + "*")
+}
+
+var currentPlatform = (whichBot,message) => {
+  whichBot.reply(message,"Platform is set to *" + state.platform+ "*")
 }
 
 var shortCut = (whichBot, message) => {
@@ -233,16 +256,43 @@ var shortCut = (whichBot, message) => {
 }
 
 var welcomeUser = (whichBot, message) => {
-  whichBot.reply(message,"Hello, I am a bot");
+  whichBot.reply(message,"Hello, I am *hotkeybot*, type `@hotkeybot help` to see my commands.");
 }
 
 var tryAgain = (whichBot,message) => {
-  whichBot.reply(message,"Did you mention me? I don't recognize that command. \n try typing @helperbot help to see what I can do!")
+  whichBot.reply(message,"Did you mention me? I don't recognize that command. \n try typing `@hotkeybot help` to see what I can do!")
+}
+
+var supportedApps = (whichBot,message) => {
+  whichBot.reply(message,"currently the programs I have keys for are: *" +  state.acceptedStates.app+"*")
+}
+
+
+var supportedOs = (whichBot,message) => {
+  whichBot.reply(message,"currently the platforms I have keys for are: *" +  state.acceptedStates.platform+"*")
+}
+
+var commandsFor = (whichBot,message) => {
+  whichBot.reply(message,"the commands for *" + state.app + "* are   ```" + Object.keys(keys[state.app][state.platform])+ "```")
+}
+
+var hotKeyFor = (whichBot,message) => {
+  if(state.app && state.platform){
+    whichBot.reply(message,getQueryTwo(message.text))
+  }
+  whichBot.reply(message,"You haven't set either a platform or program yet. type `platform setup` and `program setup` before running key for")
 }
 
 //Conversation starters
-controller.hears(['hello','hey','hi','ahoy hoy','papahotkeys'],['mention','direct_mention'],welcomeUser)
-controller.hears(['help'], ['mention','direct_mention'],helpDialogue)
-controller.hears(['config'], ['mention'],runSetup);
+controller.hears(['hello','hey','hi','ahoy hoy','papahotkeys'],['mention','direct_mention'],welcomeUser);
+controller.hears(['help'], ['mention','direct_mention'],helpDialogue);
+controller.hears(['programs'],['mention','direct_mention'],supportedApps);
+controller.hears(['platforms'],['mention','direct_mention'],supportedOs)
+controller.hears(['platform setup'], ['mention'],setPlatform);
+controller.hears(['program setup'], ['mention'],setProgram);
+controller.hears(['current program'],['mention','direct_mention'],currentApp);
+controller.hears(['current platform'],['mention','direct_mention'],currentPlatform);
+controller.hears(['current commands'],['mention','direct_mention'],commandsFor);
+controller.hears(['key for'] && ["~"],['direct_mention'],hotKeyFor)
 controller.hears( ["^"] && ["*"] && ['!'] , ['ambient','direct_mention'], shortCut);
 controller.hears([""],['mention','direct_mention'],tryAgain)
